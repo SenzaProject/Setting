@@ -1,0 +1,4 @@
+*.apk
+*.dex
+ts_out/
+tmp_dex/
