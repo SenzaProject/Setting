@@ -1,11 +1,15 @@
 package com.senza.addons;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -64,6 +68,8 @@ public final class SenzaAddons {
             final PreferenceFragmentCompat f = (PreferenceFragmentCompat) o;
             inject(f);
             scheduleBanner(f);
+            Context ctx = f.getContext();
+            if (ctx != null) registerXos(ctx);
         } catch (Throwable t) {
             Log.e(TAG, "onResume", t);
         }
@@ -386,7 +392,7 @@ public final class SenzaAddons {
         box.addView(note(c, "Memakai node MediaTek gpufreq / ged. Kalau tidak ada di kernel, diabaikan."));
 
         // --- Banner OTA
-        box.addView(title(c, "Banner kartu OTA"));
+        box.addView(title(c, "Banner kartu XOS (Ponsel saya)"));
         Button pick = new Button(c);
         pick.setText("Pilih dari galeri");
         pick.setOnClickListener(new View.OnClickListener() {
@@ -420,7 +426,7 @@ public final class SenzaAddons {
         lp2.bottomMargin = dp(c, 10);
         box.addView(pick, lp1);
         box.addView(reset, lp2);
-        box.addView(note(c, "Banner tampil di kartu OTA saat ada pembaruan sistem."));
+        box.addView(note(c, "Gambar dipasang sebagai latar kartu XOS di halaman Ponsel saya (dan kartu OTA bila ada pembaruan). Buka ulang halaman Ponsel saya setelah memilih."));
 
         ScrollView sv = new ScrollView(c);
         sv.addView(box);
@@ -496,6 +502,59 @@ public final class SenzaAddons {
             best.setScaleType(ImageView.ScaleType.CENTER_CROP);
             best.setImageBitmap(bmp);
             return;
+        }
+    }
+
+
+    // ------------------------------------------------- banner kartu XOS (Ponsel saya)
+
+    /** id view latar kartu XOS (os_version_bg) pada build TranSettings ini. */
+    private static final int ID_XOS_BG = 0x7f0b0861;
+    private static boolean cbRegistered = false;
+
+    private static void registerXos(Context c) {
+        if (cbRegistered) return;
+        Context app = c.getApplicationContext();
+        if (!(app instanceof Application)) return;
+        cbRegistered = true;
+        ((Application) app).registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override public void onActivityResumed(final Activity a) {
+                try {
+                    final Runnable r = new Runnable() {
+                        @Override public void run() {
+                            try { applyXos(a); } catch (Throwable t) { Log.e(TAG, "applyXos", t); }
+                        }
+                    };
+                    View d = a.getWindow().getDecorView();
+                    d.postDelayed(r, 300);
+                    d.postDelayed(r, 1200);
+                } catch (Throwable t) {
+                    Log.e(TAG, "onActivityResumed", t);
+                }
+            }
+            @Override public void onActivityCreated(Activity a, Bundle b) { }
+            @Override public void onActivityStarted(Activity a) { }
+            @Override public void onActivityPaused(Activity a) { }
+            @Override public void onActivityStopped(Activity a) { }
+            @Override public void onActivitySaveInstanceState(Activity a, Bundle b) { }
+            @Override public void onActivityDestroyed(Activity a) { }
+        });
+    }
+
+    private static void applyXos(Activity a) {
+        String path = sp(a).getString("banner", null);
+        if (path == null || !new File(path).exists()) return;
+        View v = a.getWindow().getDecorView().findViewById(ID_XOS_BG);
+        if (v == null) return;
+        Bitmap bmp = BitmapFactory.decodeFile(path);
+        if (bmp == null) return;
+        if (v instanceof ImageView) {
+            ImageView iv = (ImageView) v;
+            iv.setImageTintList(null);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            iv.setImageBitmap(bmp);
+        } else {
+            v.setBackground(new BitmapDrawable(a.getResources(), bmp));
         }
     }
 
