@@ -392,7 +392,7 @@ public final class SenzaAddons {
         box.addView(note(c, "Memakai node MediaTek gpufreq / ged. Kalau tidak ada di kernel, diabaikan."));
 
         // --- Banner OTA
-        box.addView(title(c, "Banner kartu XOS (Ponsel saya)"));
+        box.addView(title(c, "Banner Card"));
         Button pick = new Button(c);
         pick.setText("Pilih dari galeri");
         pick.setOnClickListener(new View.OnClickListener() {
@@ -426,7 +426,7 @@ public final class SenzaAddons {
         lp2.bottomMargin = dp(c, 10);
         box.addView(pick, lp1);
         box.addView(reset, lp2);
-        box.addView(note(c, "Gambar dipasang sebagai latar kartu XOS di halaman Ponsel saya (dan kartu OTA bila ada pembaruan). Buka ulang halaman Ponsel saya setelah memilih."));
+        box.addView(note(c, "By Senza Project"));
 
         ScrollView sv = new ScrollView(c);
         sv.addView(box);
@@ -508,7 +508,7 @@ public final class SenzaAddons {
 
     // ------------------------------------------------- banner kartu XOS (Ponsel saya)
 
-    /** id view latar kartu XOS (os_version_bg) pada build TranSettings ini. */
+    /** Cadangan id view latar kartu XOS; utamanya dicari lewat nama "os_version_bg" (aman lintas ROM). */
     private static final int ID_XOS_BG = 0x7f0b0861;
     private static boolean cbRegistered = false;
 
@@ -544,7 +544,9 @@ public final class SenzaAddons {
     private static void applyXos(Activity a) {
         String path = sp(a).getString("banner", null);
         if (path == null || !new File(path).exists()) return;
-        View v = a.getWindow().getDecorView().findViewById(ID_XOS_BG);
+        int id = a.getResources().getIdentifier("os_version_bg", "id", a.getPackageName());
+        if (id == 0) id = ID_XOS_BG;
+        View v = a.getWindow().getDecorView().findViewById(id);
         if (v == null) return;
         Bitmap bmp = BitmapFactory.decodeFile(path);
         if (bmp == null) return;
